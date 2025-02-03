@@ -2,8 +2,8 @@ include arch.make
 
 objects:=conductivity.o config.o data.o input.o iterations.o misc.o gruneisen.o phonon_routines.o integrals.o processes.o scaling.o symmetry.o wedgetc.o dos_routines.o ShengBTE.o
 
-all: ../ShengBTE
-../ShengBTE: $(objects)
+all: ../ShengBTE-4th
+../ShengBTE-4th: $(objects)
 	$(MPIFC) $(FFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 conductivity.o conductivity.mod: config.mod data.mod
 config.o config.mod:  misc.mod data.mod symmetry.mod
@@ -20,4 +20,4 @@ ShengBTE.o: misc.mod config.mod input.mod processes.mod iterations.mod conductiv
 	$(MPIFC) $(FFLAGS) -c -o $*.o $<
 	touch $*.mod
 clean:
-	rm -f ../ShengBTE *.mod *.o
+	rm -f ../ShengBTE-4th *.mod *.o
