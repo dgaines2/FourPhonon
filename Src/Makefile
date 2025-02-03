@@ -20,16 +20,16 @@ endif
 all: cpu
 
 # CPU version
-cpu: ../ShengBTE_cpu
-gpu: ../ShengBTE_gpu
+cpu: ../ShengBTE-4th
+gpu: ../ShengBTE-4th-gpu
 
 
-../ShengBTE_cpu: $(objects)
+../ShengBTE-4th: $(objects)
 	$(CPU_COMPILER) $(FFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
-../ShengBTE_gpu: $(objects)
+../ShengBTE-4th-gpu: $(objects)
 	$(GPU_COMPILER) $(FFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
-# $(GPU_COMPILER) $(FFLAGS) -o $@ $^ $(LDFLAGS)  $(LIBS)  # -static
+	# $(GPU_COMPILER) $(FFLAGS) -o $@ $^ $(LDFLAGS)  $(LIBS)  # -static
 
 # Pattern rule for object files
 %.o %.mod: %.f90
@@ -38,7 +38,7 @@ gpu: ../ShengBTE_gpu
 
 # Clean both versions
 clean:
-	rm -f ../ShengBTE_cpu ../ShengBTE_gpu *.mod *.o
+	rm -f ../ShengBTE-4th ../ShengBTE-4th-gpu *.mod *.o
 
 # Dependencies
 conductivity.o conductivity.mod: config.mod data.mod
