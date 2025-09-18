@@ -1070,6 +1070,7 @@ program ShengBTE
               write(*,*) "Info:","Relative change","=",relchange
               if(relchange.lt.eps) exit
            end do
+           if(relchange.ge.eps) print *, "Iterative BTE did not converge"
            write(403,"(F7.1,9E14.5,I6)") T,sum(ThConductivity,dim=1),ii
            flush(403)
         end if
