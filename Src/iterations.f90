@@ -85,7 +85,6 @@ contains
              end if
              F_n(i,ALLEquiList(kk,ll),:)=tau_zero(i,ll)*velocity(ALLEquiList(kk,ll),i,:)*&
                   omega(ALLEquiList(kk,ll),i)+tau_zero(i,ll)*DeltaF(i,ALLEquiList(kk,ll),:)
-             F_n(:,ALLEquiList(kk,ll),:)=transpose(matmul(symmetrizers(:,:,ALLEquiList(kk,ll)),transpose(F_n(:,ALLEquiList(kk,ll),:))))
           end do !kk
        end do
     end do
@@ -206,7 +205,6 @@ contains
             end if
             F_n(i,ALLEquiList(kk,ll),:)=tau_zero(i,ll)*velocity(ALLEquiList(kk,ll),i,:)*&
                   omega(ALLEquiList(kk,ll),i)+tau_zero(i,ll)*DeltaF(i,ALLEquiList(kk,ll),:)
-            F_n(:,ALLEquiList(kk,ll),:)=transpose(matmul(symmetrizers(:,:,ALLEquiList(kk,ll)),transpose(F_n(:,ALLEquiList(kk,ll),:))))
          end do
       end do
     end do 
