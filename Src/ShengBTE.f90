@@ -50,7 +50,7 @@ program ShengBTE
   include "mpif.h"
   
 
-  real(kind=8) :: kappa_sg(3,3),kappa_old(3,3),relchange
+  real(kind=8) :: kappa_sg(3,3),kappa_old(3,3),relchange,relchange_prev
   integer(kind=4) :: i,j,ii,jj,kk,ll,mm
   integer(kind=4) :: Tcounter
   real(kind=8),allocatable :: energy(:,:),q0(:,:),q0_reduced(:,:),velocity(:,:,:),velocity_z(:,:)
@@ -1268,6 +1268,7 @@ program ShengBTE
 
         ! Iterate to convergence if desired.
         if(convergence) then
+           relchange_prev=huge(1.d0)
            do ii=1,maxiter
               kappa_old=sum(ThConductivity,dim=1)
               if (four_phonon_iteration) then
@@ -1304,7 +1305,12 @@ program ShengBTE
               write(*,*) "Info: Iteration",ii
               write(*,*) "Info:","Relative change","=",relchange
               if(relchange.lt.eps) exit
+              relchange_prev=relchange
            end do
+           if ((relchange.lt.eps .and. ii.gt.1 .and. (relchange_prev-relchange).gt.1.0d0) .or. &
+                 relchange.ge.eps) then
+               write(*,*) "Warning: Iterative BTE did not converge reliably"
+           end if
            write(403,"(F7.1,9E14.5,I6)") T,sum(ThConductivity,dim=1),ii
            flush(403)
         end if
