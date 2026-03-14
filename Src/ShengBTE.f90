@@ -1304,7 +1304,12 @@ program ShengBTE
                    twonorm3x3(kappa_old)
               write(*,*) "Info: Iteration",ii
               write(*,*) "Info:","Relative change","=",relchange
-              if(relchange.lt.eps) exit
+              if(relchange.gt.2.5d0) then
+                  write(*,*) "Warning: Iterative BTE diverged, refusing to continue..."
+                  exit
+              elseif(relchange.lt.eps) then
+                  exit
+              end if
               relchange_prev=relchange
            end do
            if ((relchange.lt.eps .and. ii.gt.1 .and. (relchange_prev-relchange).gt.1.0d0) .or. &
