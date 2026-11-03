@@ -1,7 +1,7 @@
 # arch.make
 
 # Compiler
-export CPU_COMPILER = mpiifort
+export CPU_COMPILER = ftn  # Cray wrapper; `module load intel` (PrgEnv-intel) on Perlmutter
 export GPU_COMPILER = nvfortran  # Or using `mpif90` wrapper
 
 # CPU and GPU FFLAGS
