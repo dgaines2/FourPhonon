@@ -20,6 +20,33 @@ module processes
    real(kind=8),parameter :: hbarp=hbar*1e22
  
  contains
+
+  ! Fill arr with uniform deviates in [0,1-2^-24] from a private xorshift64
+  ! stream seeded by (mode index, call site). The sampling routines run inside
+  ! OpenMP loops over modes, where the intrinsic random_seed/random_number
+  ! share one generator state across threads; a private stream per call makes
+  ! sampled runs reproducible and independent of the MPI/OpenMP layout.
+  subroutine fill_random(mm,site,arr)
+    implicit none
+    integer(kind=4),intent(in) :: mm,site
+    real,intent(out) :: arr(:)
+    integer(kind=8) :: x,ii
+    x=88172645463325252_8+1000003_8*int(site,8)+7919_8*int(mm,8)
+    do ii=1,20
+       call xorshift64(x)
+    end do
+    do ii=1,size(arr,kind=8)
+       call xorshift64(x)
+       arr(ii)=real(ishft(x,-40),4)*5.9604644775390625e-8
+    end do
+  contains
+    subroutine xorshift64(st)
+      integer(kind=8),intent(inout) :: st
+      st=ieor(st,ishft(st,13))
+      st=ieor(st,ishft(st,-7))
+      st=ieor(st,ishft(st,17))
+    end subroutine xorshift64
+  end subroutine fill_random
  
    ! Compute one of the matrix elements involved in the calculation of Ind_plus.
    function Vp_plus(i,j,k,q,qprime,qdprime,realqprime,realqdprime,eigenvect,&
@@ -863,10 +890,9 @@ module processes
        ! phonon1: ll is momentum [1:nptk], i is energy [1:Nband], ll and i are calculated from mm, mm is phonon number [1, Nbands*NList]
        ! phonon2: ii is momentum [1:nptk], j is energy [1:Nband]
        ! phonon3: ss is momentum [1:nptk], k is energy [1:Nband]
-       call random_seed()
-       call random_number(rand_matrix)
+       call fill_random(mm,1,rand_matrix)
        do iter=1,num_sample_process_3ph_phase_space
-          rand = rand_matrix(iter-1)
+          rand = rand_matrix(iter)
           rand_num = FLOOR(INT(Nbands*nptk*Nbands)*rand)+1  ! generate random integer in [1,Nbands*nptk*Nbands]
           nn = int((rand_num-1)/Nbands)+1 ! get a random phonon number for 2nd phonon
           k = modulo(rand_num-1,Nbands)+1 ! phonon3 branch [1:Nband]
@@ -940,10 +966,9 @@ module processes
        ! phonon1: ll is momentum [1:nptk], i is energy [1:Nband], ll and i are calculated from mm, mm is phonon number [1, Nbands*NList]
        ! phonon2: ii is momentum [1:nptk], j is energy [1:Nband]
        ! phonon3: ss is momentum [1:nptk], k is energy [1:Nband]
-       call random_seed()
-       call random_number(rand_matrix)
+       call fill_random(mm,2,rand_matrix)
        do iter=1,num_sample_process_3ph_phase_space
-          rand = rand_matrix(iter-1)
+          rand = rand_matrix(iter)
           rand_num = FLOOR(INT(Nbands*nptk*Nbands)*rand)+1  ! generate random integer in [1,Nbands*nptk*Nbands]
           nn = int((rand_num-1)/Nbands)+1 ! get a random phonon number for 2nd phonon
           k = modulo(rand_num-1,Nbands)+1 ! phonon3 branch [1:Nband]
@@ -1520,10 +1545,9 @@ module processes
        ! phonon1: ll is momentum [1:nptk], i is energy [1:Nband], ll and i are calculated from mm, mm is phonon number [1, Nbands*NList]
        ! phonon2: ii is momentum [1:nptk], j is energy [1:Nband]
        ! phonon3: ss is momentum [1:nptk], k is energy [1:Nband]
-       call random_seed()
-       call random_number(rand_matrix)
+       call fill_random(mm,3,rand_matrix)
        do iter=1,num_sample_process_3ph
-          rand = rand_matrix(iter-1)
+          rand = rand_matrix(iter)
           rand_num = FLOOR(INT(Nbands*nptk*Nbands)*rand)+1  ! generate random integer in [1,Nbands*nptk*Nbands]
           nn = int((rand_num-1)/Nbands)+1 ! get a random phonon number for 2nd phonon
           k = modulo(rand_num-1,Nbands)+1 ! phonon3 branch [1:Nband]
@@ -1620,10 +1644,9 @@ module processes
        ! phonon1: ll is momentum [1:nptk], i is energy [1:Nband], ll and i are calculated from mm, mm is phonon number [1, Nbands*NList]
        ! phonon2: ii is momentum [1:nptk], j is energy [1:Nband]
        ! phonon3: ss is momentum [1:nptk], k is energy [1:Nband]
-       call random_seed()
-       call random_number(rand_matrix)
+       call fill_random(mm,4,rand_matrix)
        do iter=1,num_sample_process_3ph
-          rand = rand_matrix(iter-1)
+          rand = rand_matrix(iter)
           rand_num = FLOOR(INT(Nbands*nptk*Nbands)*rand)+1  ! generate random integer in [1,Nbands*nptk*Nbands]
           nn = int((rand_num-1)/Nbands)+1 ! get a random phonon number for 2nd phonon
           k = modulo(rand_num-1,Nbands)+1 ! phonon3 branch [1:Nband]
@@ -2520,9 +2543,8 @@ module processes
           ! total combination: Nbands*nptk*Nbands*nptk*Nbands/2
           ! j = n + FLOOR((m+1-n)*u)  ! equation to generate random number j in [n,m] from a uniform distribution u in [0,1]
  
-          call random_seed()
-          call random_number(rand_matrix)
-          iter=0
+          call fill_random(mm,5,rand_matrix)
+          iter=1
           do while (iter<=num_sample_process_4ph_phase_space)
              matrix_iter = (iter-1)*5
              ii=1+FLOOR(INT(nptk+1-1)*rand_matrix(matrix_iter+1)) ! phonon2 momentum [1:nptk]
@@ -2608,9 +2630,8 @@ module processes
        ! total combination: Nbands*nptk*Nbands*nptk*Nbands/2
        ! j = n + FLOOR((m+1-n)*u)  ! equation to generate random number j in [n,m] from a uniform distribution u in [0,1]
  
-          call random_seed()
-          call random_number(rand_matrix)
-          iter=0
+          call fill_random(mm,6,rand_matrix)
+          iter=1
           do while (iter<=num_sample_process_4ph_phase_space)
              matrix_iter = (iter-1)*5
              ii=1+FLOOR(INT(nptk+1-1)*rand_matrix(matrix_iter+1)) ! phonon2 momentum [1:nptk]
@@ -2697,9 +2718,8 @@ module processes
           ! total combination: Nbands*nptk*Nbands*nptk*Nbands/2
           ! j = n + FLOOR((m+1-n)*u)  ! equation to generate random number j in [n,m] from a uniform distribution u in [0,1]
  
-          call random_seed()
-          call random_number(rand_matrix)
-          iter=0
+          call fill_random(mm,7,rand_matrix)
+          iter=1
           do while (iter<=num_sample_process_4ph_phase_space)
              matrix_iter = (iter-1)*5
              ii=1+FLOOR(INT(nptk+1-1)*rand_matrix(matrix_iter+1)) ! phonon2 momentum [1:nptk]
@@ -4862,9 +4882,8 @@ module processes
        ! total combination: Nbands*nptk*Nbands*nptk*Nbands/2
        ! j = n + FLOOR((m+1-n)*u)  ! equation to generate random number j in [n,m] from a uniform distribution u in [0,1]
  
-       call random_seed()
-       call random_number(rand_matrix)
-       iter=0
+       call fill_random(mm,8,rand_matrix)
+       iter=1
        do while (iter<=num_sample_process_4ph)
           matrix_iter = (iter-1)*5
           ii=1+FLOOR(INT(nptk+1-1)*rand_matrix(matrix_iter+1)) ! phonon2 momentum [1:nptk]
@@ -4981,9 +5000,8 @@ module processes
        ! total combination: Nbands*nptk*Nbands*nptk*Nbands/2
        ! j = n + FLOOR((m+1-n)*u)  ! equation to generate random number j in [n,m] from a uniform distribution u in [0,1]
  
-       call random_seed()
-       call random_number(rand_matrix)
-       iter=0
+       call fill_random(mm,9,rand_matrix)
+       iter=1
        do while (iter<=num_sample_process_4ph)
           matrix_iter = (iter-1)*5
           ii=1+FLOOR(INT(nptk+1-1)*rand_matrix(matrix_iter+1)) ! phonon2 momentum [1:nptk]
@@ -5102,9 +5120,8 @@ module processes
        ! total combination: Nbands*nptk*Nbands*nptk*Nbands/2
        ! j = n + FLOOR((m+1-n)*u)  ! equation to generate random number j in [n,m] from a uniform distribution u in [0,1]
  
-       call random_seed()
-       call random_number(rand_matrix)
-       iter=0
+       call fill_random(mm,10,rand_matrix)
+       iter=1
        do while (iter<=num_sample_process_4ph)
           matrix_iter = (iter-1)*5
           ii=1+FLOOR(INT(nptk+1-1)*rand_matrix(matrix_iter+1)) ! phonon2 momentum [1:nptk]
