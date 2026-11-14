@@ -49,8 +49,11 @@ module processes
      integer(kind=4) :: rr
      integer(kind=4) :: ss
      integer(kind=4) :: tt
+     integer(kind=4) :: oo
      complex(kind=8) :: prefactor
      complex(kind=8) :: Vp0
+     complex(kind=8) :: ei(3),ej(3),ek(3)
+     complex(kind=8) :: sum_t,sum_s
 
 
      Vp_plus=0.d0
@@ -65,16 +68,22 @@ module processes
          !    cmplx(cos(dot_product(realqprime, R_j(:, ll))), sin(dot_product(realqprime, R_j(:, ll))), kind=8) * &
          !    cmplx(cos(-dot_product(realqdprime, R_k(:, ll))), sin(-dot_product(realqdprime, R_k(:, ll))), kind=8)
 
+        do oo=1,3
+           ei(oo)=eigenvect(q,i,oo+3*(Index_i(ll)-1))
+           ej(oo)=eigenvect(qprime,j,oo+3*(Index_j(ll)-1))
+           ek(oo)=conjg(eigenvect(qdprime,k,oo+3*(Index_k(ll)-1)))
+        end do
         Vp0=0.d0
         do rr=1,3
+           sum_s=0.d0
            do ss=1,3
+              sum_t=0.d0
               do tt=1,3
-                 Vp0=Vp0+Phi(tt,ss,rr,ll)*&
-                      eigenvect(q,i,tt+3*(Index_i(ll)-1))*&
-                      eigenvect(qprime,j,ss+3*(Index_j(ll)-1))*&
-                      conjg(eigenvect(qdprime,k,rr+3*(Index_k(ll)-1)))
+                 sum_t=sum_t+Phi(tt,ss,rr,ll)*ei(tt)
               end do
+              sum_s=sum_s+sum_t*ej(ss)
            end do
+           Vp0=Vp0+sum_s*ek(rr)
         end do
         Vp_plus=Vp_plus+prefactor*Vp0
      end do
@@ -108,8 +117,11 @@ module processes
      integer(kind=4) :: rr
      integer(kind=4) :: ss
      integer(kind=4) :: tt
+     integer(kind=4) :: oo
      complex(kind=8) :: prefactor
      complex(kind=8) :: Vp0
+     complex(kind=8) :: ei(3),ej(3),ek(3)
+     complex(kind=8) :: sum_t,sum_s
  
      Vp_minus=0.d0
  
@@ -123,16 +135,22 @@ module processes
       !      cmplx(cos(-dot_product(realqprime, R_j(:, ll))), sin(-dot_product(realqprime, R_j(:, ll))), kind=8) * &
       !      cmplx(cos(-dot_product(realqdprime, R_k(:, ll))), sin(-dot_product(realqdprime, R_k(:, ll))), kind=8)
 
-        Vp0=0.
+        do oo=1,3
+           ei(oo)=eigenvect(q,i,oo+3*(Index_i(ll)-1))
+           ej(oo)=conjg(eigenvect(qprime,j,oo+3*(Index_j(ll)-1)))
+           ek(oo)=conjg(eigenvect(qdprime,k,oo+3*(Index_k(ll)-1)))
+        end do
+        Vp0=0.d0
         do rr=1,3
+           sum_s=0.d0
            do ss=1,3
+              sum_t=0.d0
               do tt=1,3
-                 Vp0=Vp0+Phi(tt,ss,rr,ll)*&
-                      eigenvect(q,i,tt+3*(Index_i(ll)-1))*&
-                      conjg(eigenvect(qprime,j,ss+3*(Index_j(ll)-1)))*&
-                      conjg(eigenvect(qdprime,k,rr+3*(Index_k(ll)-1)))
+                 sum_t=sum_t+Phi(tt,ss,rr,ll)*ei(tt)
               end do
+              sum_s=sum_s+sum_t*ej(ss)
            end do
+           Vp0=Vp0+sum_s*ek(rr)
         end do
         Vp_minus=Vp_minus+prefactor*Vp0
      end do
@@ -174,6 +192,9 @@ module processes
        integer(kind=4) :: uu
        complex(kind=8) :: prefactor
        complex(kind=8) :: Vp0
+       integer(kind=4) :: oo
+       complex(kind=8) :: ei(3),ej(3),ek(3),el(3)
+       complex(kind=8) :: sum_u,sum_t,sum_s
  
        Vp_pp=0.d0
  
@@ -183,19 +204,27 @@ module processes
                 phexp(dot_product(realqprime,R_j(:,ll)))*&
                 phexp(dot_product(realqdprime,R_k(:,ll)))*&
                 phexp(-dot_product(realqtprime,R_l(:,ll)))
+          do oo=1,3
+             ei(oo)=eigenvect(q,i,oo+3*(Index_i(ll)-1))
+             ej(oo)=eigenvect(qprime,j,oo+3*(Index_j(ll)-1))
+             ek(oo)=eigenvect(qdprime,k,oo+3*(Index_k(ll)-1))
+             el(oo)=conjg(eigenvect(qtprime,l,oo+3*(Index_l(ll)-1)))
+          end do
           Vp0=0.d0
           do rr=1,3
+             sum_s=0.d0
              do ss=1,3
+                sum_t=0.d0
                 do tt=1,3
+                   sum_u=0.d0
                    do uu=1,3
-                      Vp0=Vp0+Phi(uu,tt,ss,rr,ll)*&
-                         eigenvect(q,i,uu+3*(Index_i(ll)-1))*&
-                         eigenvect(qprime,j,tt+3*(Index_j(ll)-1))*&
-                         eigenvect(qdprime,k,ss+3*(Index_k(ll)-1))*&
-                         conjg(eigenvect(qtprime,l,rr+3*(Index_l(ll)-1)))
+                      sum_u=sum_u+Phi(uu,tt,ss,rr,ll)*ei(uu)
                    end do
+                   sum_t=sum_t+sum_u*ej(tt)
                 end do
+                sum_s=sum_s+sum_t*ek(ss)
              end do
+             Vp0=Vp0+sum_s*el(rr)
           end do
           Vp_pp=Vp_pp+prefactor*Vp0
        end do
@@ -238,6 +267,9 @@ module processes
        integer(kind=4) :: uu
        complex(kind=8) :: prefactor
        complex(kind=8) :: Vp0
+       integer(kind=4) :: oo
+       complex(kind=8) :: ei(3),ej(3),ek(3),el(3)
+       complex(kind=8) :: sum_u,sum_t,sum_s
  
        Vp_pm=0.d0
  
@@ -247,19 +279,27 @@ module processes
                 phexp(dot_product(realqprime,R_j(:,ll)))*&
                 phexp(-dot_product(realqdprime,R_k(:,ll)))*&
                 phexp(-dot_product(realqtprime,R_l(:,ll)))
+          do oo=1,3
+             ei(oo)=eigenvect(q,i,oo+3*(Index_i(ll)-1))
+             ej(oo)=eigenvect(qprime,j,oo+3*(Index_j(ll)-1))
+             ek(oo)=conjg(eigenvect(qdprime,k,oo+3*(Index_k(ll)-1)))
+             el(oo)=conjg(eigenvect(qtprime,l,oo+3*(Index_l(ll)-1)))
+          end do
           Vp0=0.d0
           do rr=1,3
+             sum_s=0.d0
              do ss=1,3
+                sum_t=0.d0
                 do tt=1,3
+                   sum_u=0.d0
                    do uu=1,3
-                      Vp0=Vp0+Phi(uu,tt,ss,rr,ll)*&
-                         eigenvect(q,i,uu+3*(Index_i(ll)-1))*&
-                         eigenvect(qprime,j,tt+3*(Index_j(ll)-1))*&
-                         conjg(eigenvect(qdprime,k,ss+3*(Index_k(ll)-1)))*&
-                         conjg(eigenvect(qtprime,l,rr+3*(Index_l(ll)-1)))
+                      sum_u=sum_u+Phi(uu,tt,ss,rr,ll)*ei(uu)
                    end do
+                   sum_t=sum_t+sum_u*ej(tt)
                 end do
+                sum_s=sum_s+sum_t*ek(ss)
              end do
+             Vp0=Vp0+sum_s*el(rr)
           end do
           Vp_pm=Vp_pm+prefactor*Vp0
        end do
@@ -302,6 +342,9 @@ module processes
     integer(kind=4) :: uu
     complex(kind=8) :: prefactor
     complex(kind=8) :: Vp0
+    integer(kind=4) :: oo
+    complex(kind=8) :: ei(3),ej(3),ek(3),el(3)
+    complex(kind=8) :: sum_u,sum_t,sum_s
  
     Vp_mm=0.d0
  
@@ -311,19 +354,27 @@ module processes
              phexp(-dot_product(realqprime,R_j(:,ll)))*&
              phexp(-dot_product(realqdprime,R_k(:,ll)))*&
              phexp(-dot_product(realqtprime,R_l(:,ll)))
+       do oo=1,3
+          ei(oo)=eigenvect(q,i,oo+3*(Index_i(ll)-1))
+          ej(oo)=conjg(eigenvect(qprime,j,oo+3*(Index_j(ll)-1)))
+          ek(oo)=conjg(eigenvect(qdprime,k,oo+3*(Index_k(ll)-1)))
+          el(oo)=conjg(eigenvect(qtprime,l,oo+3*(Index_l(ll)-1)))
+       end do
        Vp0=0.d0
        do rr=1,3
+          sum_s=0.d0
           do ss=1,3
+             sum_t=0.d0
              do tt=1,3
+                sum_u=0.d0
                 do uu=1,3
-                   Vp0=Vp0+Phi(uu,tt,ss,rr,ll)*&
-                      eigenvect(q,i,uu+3*(Index_i(ll)-1))*&
-                      conjg(eigenvect(qprime,j,tt+3*(Index_j(ll)-1)))*&
-                      conjg(eigenvect(qdprime,k,ss+3*(Index_k(ll)-1)))*&
-                      conjg(eigenvect(qtprime,l,rr+3*(Index_l(ll)-1)))
+                   sum_u=sum_u+Phi(uu,tt,ss,rr,ll)*ei(uu)
                 end do
+                sum_t=sum_t+sum_u*ej(tt)
              end do
+             sum_s=sum_s+sum_t*ek(ss)
           end do
+          Vp0=Vp0+sum_s*el(rr)
        end do
        Vp_mm=Vp_mm+prefactor*Vp0
     end do
