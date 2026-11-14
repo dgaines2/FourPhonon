@@ -5,7 +5,7 @@ export CPU_COMPILER = mpiifort
 export GPU_COMPILER = nvfortran  # Or using `mpif90` wrapper
 
 # CPU and GPU FFLAGS
-CPU_FFLAGS = -qopenmp -traceback -O2 -fpp -DCPU_VERSION  #-static_intel   -debug 
+CPU_FFLAGS = -qopenmp -traceback -O2 -xHost -fpp -DCPU_VERSION  #-static_intel   -debug 
 GPU_FFLAGS = -acc -Minfo=accel  -Mpreprocess -g -cuda -gpu=ptxinfo -mp -O2 -DGPU_VERSION
 # Choose ONE of the following mutually exclusive options for GPU parallelization:
 GPU_FFLAGS += -DGPU_ALL_MODE_PARALLELIZATION    # use this tag to use all-mode parallelization
